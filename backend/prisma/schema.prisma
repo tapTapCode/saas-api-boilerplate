@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  
+  apiKeys       ApiKey[]
+  usageRecords  UsageRecord[]
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users        User[]
+  subscriptions Subscription[]
+  apiKeys      ApiKey[]
+  usageRecords UsageRecord[]
+
+  @@map("organizations")
+}
+
+model Subscription {
+  id                String            @id @default(cuid())
+  organizationId    String
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  stripeCustomerId       String?  @unique
+  stripeSubscriptionId   String?  @unique
+  stripePriceId          String?
+  
+  plan              SubscriptionPlan  @default(FREE)
+  status            SubscriptionStatus @default(ACTIVE)
+  
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean @default(false)
+  
+  requestLimit      Int      @default(1000) // per month
+  rateLimit         Int      @default(10)   // per minute
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@map("subscriptions")
+}
+
+model ApiKey {
+  id             String   @id @default(cuid())
+  key            String   @unique
+  name           String?
+  
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  isActive       Boolean  @default(true)
+  lastUsedAt     DateTime?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  usageRecords   UsageRecord[]
+
+  @@index([key])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("api_keys")
+}
+
+model UsageRecord {
+  id             String   @id @default(cuid())
+  
+  apiKeyId       String
+  apiKey         ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  endpoint       String
+  method         String
+  statusCode     Int
+  responseTime   Int      // in milliseconds
+  
+  timestamp      DateTime @default(now())
+
+  @@index([apiKeyId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("usage_records")
+}
+
+enum Role {
+  USER
+  ADMIN
+  OWNER
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  UNPAID
+  TRIALING
+}
