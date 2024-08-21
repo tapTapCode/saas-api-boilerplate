@@ -1,22 +1,124 @@
-# SaaS API Boilerplate
+# SaaS API Starter
 
-Production-ready multi-tenant SaaS API platform with subscription management, built with NestJS and Next.js.
+I got tired of rebuilding Stripe billing + auth for every side project, so I made this starter. It's a working multi-tenant API with subscriptions, rate limiting, and team management.
 
-**📚 Documentation**: See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for detailed setup instructions
-**🚀 Quick Start**: Follow the setup guide to get running in 10 minutes
+**Why I built this**: After my third side project that needed "just basic billing and auth," I realized I was copy-pasting the same NestJS setup every time. This is that setup, cleaned up enough that I can actually reuse it.
 
-## Features
+## What It Does
 
-- **Multi-Tenant Architecture**: Isolated data per organization
-- **Stripe Integration**: Subscription billing and usage-based pricing
-- **Tiered Access**: Free, Pro, and Enterprise plans with different limits
-- **API Key Management**: Secure API key generation and rotation
-- **Rate Limiting**: Redis-based rate limiting per subscription tier
-- **Usage Tracking**: Monitor API calls and billing
-- **Webhook Handling**: Stripe webhooks for subscription events
-- **Admin Dashboard**: Manage users, subscriptions, and analytics
-- **JWT Authentication**: Secure user authentication
-- **Role-Based Access**: Owner, Admin, Member roles
+- **Multi-tenant**: Each org has isolated data (I learned the hard way that `WHERE org_id = ?` is easy to forget)
+- **Stripe billing**: Free/Pro/Enterprise tiers with usage limits
+- **Rate limiting**: Redis-based, tier-specific (Pro users get more calls)
+- **API keys**: Teams can generate and revoke keys without bothering me
+- **Basic dashboard**: React frontend for managing orgs and seeing usage
+
+## Stack
+
+- **Backend**: NestJS + TypeScript + Prisma + PostgreSQL 
+- **Billing**: Stripe (webhooks for subscription changes)
+- **Rate limiting**: Redis + `@nestjs/throttler`
+- **Frontend**: React + Tailwind (functional, not pretty)
+
+## Quick Start
+
+```bash
+# Clone and setup
+git clone https://github.com/tapTapCode/saas-api-boilerplate.git
+cd saas-api-boilerplate/backend
+npm install
+cp .env.example .env
+# Edit .env with your Stripe keys
+npx prisma migrate dev
+npm run start:dev
+```
+
+Need the frontend too?
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
+
+## Subscription Tiers
+
+| Feature | Free | Pro ($49/mo) | Enterprise |
+|---------|------|-------------|------------|
+| API calls/month | 1,000 | 100,000 | Custom |
+| Rate limit | 10/min | 100/min | 1000/min |
+| Team members | 1 | 10 | Unlimited |
+
+## Trade-offs I Made
+
+- **NestJS over Express**: More boilerplate, but the dependency injection pays off when you have 5+ services
+- **Redis for rate limiting**: Could've done in-memory, but needed it to work across multiple server instances
+- **Prisma over raw SQL**: Slower for complex queries, but I'm not writing migration scripts by hand
+
+## What's Messy
+
+- The rate limit logic in `app.module.ts` is a bit hacky - it checks the subscription tier on every request
+- Stripe webhook handling could use better error recovery (right now it just logs and hopes)
+- Frontend is bare-bones. I focused on the API because that's what I keep rebuilding.
+
+## API Quick Reference
+
+```bash
+# Register
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "securepassword", "name": "John"}'
+
+# Create org (requires auth)
+curl -X POST http://localhost:3000/organizations \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"name": "My Company", "plan": "pro"}'
+
+# Generate API key
+curl -X POST http://localhost:3000/api-keys \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"name": "Production Key", "organizationId": "org_123"}'
+
+# Use the API
+curl http://localhost:3000/api/data \
+  -H "X-API-Key: sk_live_..."
+```
+
+## Environment Variables
+
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/saas_db
+REDIS_HOST=localhost
+REDIS_PORT=6379
+JWT_SECRET=your-secret-key
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+## Testing
+
+```bash
+npm test              # Unit tests (sparse, honestly)
+npm run test:e2e      # E2E tests (even sparser)
+```
+
+## Deployment
+
+I've deployed this to Railway. The gist:
+1. Push to GitHub
+2. Connect Railway to repo
+3. Add PostgreSQL + Redis services
+4. Set env vars
+5. Configure Stripe webhook URL
+
+## TODO / Known Issues
+
+- [ ] Rate limit by API key, not just user (right now one user hogs all the calls)
+- [ ] Better error messages when Stripe webhooks fail
+- [ ] Invoice history in dashboard (currently only shows current usage)
+- [ ] Email notifications when hitting usage limits
+
+## License
+
+MIT - Use it, fork it, complain about it.
 
 ## Architecture
 

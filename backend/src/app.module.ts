@@ -12,6 +12,9 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    // TODO: This rate limiting is hacky - it uses a default of 60/min but
+    // we override it per-request based on subscription tier in the guard.
+    // Should probably use a custom ThrottlerStorage instead.
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 minute
