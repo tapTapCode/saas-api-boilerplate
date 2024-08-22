@@ -121,9 +121,9 @@ export class SubscriptionsService {
     }
   }
 
-  private mapPriceToPlan(priceId: string): string {
+  private mapPriceToPlan(priceId: string): 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE' {
     // Map your Stripe price IDs to plan names
-    const priceMap: Record<string, string> = {
+    const priceMap: Record<string, 'FREE' | 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'> = {
       'price_starter': 'STARTER',
       'price_professional': 'PROFESSIONAL',
       'price_enterprise': 'ENTERPRISE',

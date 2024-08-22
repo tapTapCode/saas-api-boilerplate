@@ -12,7 +12,7 @@ export class StripeService {
       throw new Error('STRIPE_SECRET_KEY is not set');
     }
     this.stripe = new Stripe(apiKey, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2023-10-16',
     });
   }
 
