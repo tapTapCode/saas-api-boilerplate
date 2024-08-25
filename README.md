@@ -1,6 +1,9 @@
 # SaaS API Boilerplate
 
-A production-ready multi-tenant SaaS API platform with Stripe billing, tiered subscriptions, usage tracking, and API rate limiting.
+Production-ready multi-tenant SaaS API platform with subscription management, built with NestJS and Next.js.
+
+**📚 Documentation**: See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for detailed setup instructions
+**🚀 Quick Start**: Follow the setup guide to get running in 10 minutes
 
 ## Features
 
