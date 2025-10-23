@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# Database
+postgres_data/
+*.db
+
+# Redis
+redis_data/
+dump.rdb
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+
+# Stripe
+.stripe/
